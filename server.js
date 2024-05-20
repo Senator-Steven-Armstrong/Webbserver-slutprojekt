@@ -5,6 +5,8 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
+var playersConnected = 0;
+
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
@@ -13,14 +15,11 @@ app.use(express.static("public"));
 
 io.on("connection", (socket) => {
   console.log("a user connected");
+  playersConnected++;
 
   socket.on("disconnect", () => {
     console.log("a user disconnected");
-  });
-
-  socket.on("chat message", (msg) => {
-    console.log("message: " + msg);
-    io.emit("chat message", msg);
+    playersConnected--;
   });
 });
 

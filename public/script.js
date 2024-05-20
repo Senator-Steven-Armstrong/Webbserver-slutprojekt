@@ -1,6 +1,6 @@
 // DECLARATION ---------------------------------------------------------------------------
 
-var socket = io();
+const socket = io();
 
 const canvas = document.getElementById("game-area");
 const c = canvas.getContext("2d");
