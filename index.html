@@ -1,36 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Socket.IO chat</title>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Magical Moe vs Stabby Pete</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
     <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Press+Start+2P"
+    />
   </head>
   <body>
-    <ul id="messages"></ul>
-    <form id="form" action="">
-      <input id="input" autocomplete="off" /><button>Send</button>
-    </form>
+    <!-- MENU -->
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-      var socket = io();
+    <div id="start-menu-container">
+      <div id="logo"><img src="images/logo.png" alt="" /></div>
+      <button onclick="startGame()">Ready</button>
+      <div class="character-select">
+        <div>
+          <h2>Stabby Pete</h2>
+          <img src="images/stabby pete/select.png" alt="pete" />
+          <input type="radio" name="player" id="pete1" />
+        </div>
+        <div>
+          <h2>Magical Moe</h2>
+          <img src="images/Magical moe/select.png" alt="moe" />
+          <input type="radio" name="player" id="moe1" />
+        </div>
+      </div>
+    </div>
 
-      var form = document.getElementById("form");
-      var input = document.getElementById("input");
+    <!-- GAME -->
 
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        if (input.value) {
-          socket.emit("chat message", input.value);
-          input.value = "";
-        }
-      });
+    <div id="game-over">
+      <div></div>
+    </div>
 
-      socket.on("chat message", function (msg) {
-        var item = document.createElement("li");
-        item.textContent = msg;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
-      });
-    </script>
+    <div id="event-text"></div>
+
+    <div class="circle" id="icon-frame-1">
+      <img id="player-1-icon" src="" alt="" />
+    </div>
+
+    <div id="UI-container">
+      <div class="health-bar">
+        <div id="player1-hp"></div>
+      </div>
+
+      <div class="circle" id="game-timer"></div>
+
+      <div class="health-bar">
+        <div id="player2-hp"></div>
+      </div>
+    </div>
+
+    <div class="circle" id="icon-frame-2">
+      <img id="player-2-icon" class="flip" src="" alt="" />
+    </div>
+
+    <div id="ground">
+      <img id="ground-img" src="images/foreground.png" alt="" />
+    </div>
+
+    <canvas id="game-area"></canvas>
   </body>
+  <script src="script.js" async defer></script>
 </html>
