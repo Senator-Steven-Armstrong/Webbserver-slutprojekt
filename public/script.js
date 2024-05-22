@@ -920,11 +920,14 @@ class PlayerMage extends Player {
   }
 }
 
+function getReady() {
+  socket.emit("getReady");
+}
+
 function startGame() {
   if (
     gameStart == false &&
-    (player1moeInput.checked || player1peteInput.checked) &&
-    (player2moeInput.checked || player2peteInput.checked)
+    (player1moeInput.checked || player1peteInput.checked)
   ) {
     assignPlayers();
 
@@ -954,6 +957,36 @@ function startGame() {
     fightMusic.play();
 
     setInterval(gameLoop, 1000 / 60);
+  }
+}
+
+function assignPlayers() {
+  if (player1moeInput.checked == true) {
+    player1 = new PlayerMage(
+      200,
+      100,
+      "d",
+      "a",
+      "w",
+      "s",
+      " ",
+      "e",
+      false,
+      "images/stabby pete/stabby-pete-idle.png"
+    );
+  } else if (player1peteInput.checked == true) {
+    player1 = new PlayerPete(
+      200,
+      100,
+      "d",
+      "a",
+      "w",
+      "s",
+      " ",
+      "e",
+      false,
+      "images/stabby pete/stabby-pete-idle-flip.png"
+    );
   }
 }
 
@@ -1038,64 +1071,6 @@ function eventHook() {
     knockbackAmplifier = 1;
     changeEventText("");
   }, eventTimerdelay * eventDurationCoefficient);
-}
-
-function assignPlayers() {
-  if (player1moeInput.checked == true) {
-    player1 = new PlayerMage(
-      200,
-      100,
-      "d",
-      "a",
-      "w",
-      "s",
-      " ",
-      "e",
-      false,
-      "images/stabby pete/stabby-pete-idle.png"
-    );
-  } else if (player1peteInput.checked == true) {
-    player1 = new PlayerPete(
-      200,
-      100,
-      "d",
-      "a",
-      "w",
-      "s",
-      " ",
-      "e",
-      false,
-      "images/stabby pete/stabby-pete-idle-flip.png"
-    );
-  }
-
-  if (player2moeInput.checked == true) {
-    player2 = new PlayerMage(
-      window.innerWidth - 290,
-      100,
-      "ArrowRight",
-      "ArrowLeft",
-      "ArrowUp",
-      "ArrowDown",
-      "k",
-      "j",
-      true,
-      "images/stabby pete/stabby-pete-idle.png"
-    );
-  } else if (player2peteInput.checked == true) {
-    player2 = new PlayerPete(
-      window.innerWidth - 290,
-      100,
-      "ArrowRight",
-      "ArrowLeft",
-      "ArrowUp",
-      "ArrowDown",
-      "k",
-      "j",
-      true,
-      "images/stabby pete/stabby-pete-idle-flip.png"
-    );
-  }
 }
 
 function gameLoop() {

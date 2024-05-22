@@ -5,22 +5,29 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
+app.use(express.static("public"));
+
 var playersConnected = 0;
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+  console.log(playersConnected);
+  if (playersConnected <= 1) {
+    res.sendFile(__dirname + "/index.html");
+  } else {
+    res.sendFile(__dirname + "/abyss.html");
+  }
 });
 
-app.use(express.static("public"));
-
 io.on("connection", (socket) => {
-  console.log("a user connected");
+  console.log("user " + socket.id + " connected");
   playersConnected++;
 
   socket.on("disconnect", () => {
-    console.log("a user disconnected");
+    console.log("user " + socket.id + " disconnected");
     playersConnected--;
   });
+
+  socket.on("getReady", () => {});
 });
 
 server.listen(3000, () => {
