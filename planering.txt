@@ -7,3 +7,5 @@ När vi behöver skicka eller ta emot mellan server och klient:
     - När man klickar på tangentbordet för att röra sig eller attackera => Antingen:
         1. Skicka över tangentknapparna och räkna på klientsidan (väldigt opålitligt och jobbigt med att hålla in tangenter)
         2. skicka över position, öö basically bättre på alla sätt
+
+    - Fixa så det står väntar på motståndare istället för ready när det bara är en spelare.

@@ -2,6 +2,7 @@
 
 const socket = io();
 let roomId = null;
+let isHost = false;
 
 const canvas = document.getElementById("game-area");
 const c = canvas.getContext("2d");
@@ -926,92 +927,241 @@ class PlayerMage extends Player {
   }
 }
 
-// ----------------------------------SOCKET SHIT----------------------------------
+// ----------------------------------SOCKET STUFFS----------------------------------
 
 function createGame() {
+  isHost = true;
   socket.emit("createGame");
 }
 
 function joinGame() {
   roomId = document.getElementById("input2").value;
+  console.log(roomId);
   socket.emit("joinGame", { roomId: roomId });
 }
 
 socket.on("newGame", (data) => {
-  console.log("itsa me a-newGame");
+  console.log("itsa me a-newGame: " + data.roomId);
   roomId = data.roomId;
   createGameButton.style.display = "none";
   joinGameButton.style.display = "none";
   joinTextField.style.display = "none";
   waitingDiv.style.display = "block";
-  codeText.value = "Room Code: " + roomId;
+  codeText.innerText = "Room Code: " + roomId;
+});
+
+socket.on("playersConnected", () => {
+  console.log("trying to assign players");
+  assignPlayers();
 });
 
 function startGame() {
-  if (
-    gameStart == false &&
-    (player1moeInput.checked || player1peteInput.checked)
-  ) {
-    assignPlayers();
+  startMenu.style.display = "none";
 
-    gameTime = 90;
-    gameStart = true;
+  gameTime = 90;
+  gameStart = true;
 
+  if (isHost) {
     iconPlayer1.src = player1.iconSrc;
     iconPlayer2.src = player2.iconSrc;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    IDgameTimer = setInterval(function () {
-      gameTime--;
-    }, 1000);
-
-    IDeventTimer = setInterval(gameEvents, eventTimerdelay);
-
-    UIContainer.classList.add("showFromTop");
-    iconFrame1.classList.add("showFromLeft");
-    iconFrame2.classList.add("showFromRight");
-    startMenu.classList.add("moveUnderScreen");
-    ground.classList.add("showFromBottom");
-    eventText.style.display = "block";
-
-    introMusic.stop();
-    fightMusic.play();
-
-    setInterval(gameLoop, 1000 / 60);
+  } else {
+    iconPlayer2.src = player1.iconSrc;
+    iconPlayer1.src = player2.iconSrc;
   }
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  IDgameTimer = setInterval(function () {
+    gameTime--;
+  }, 1000);
+
+  IDeventTimer = setInterval(gameEvents, eventTimerdelay);
+
+  UIContainer.classList.add("showFromTop");
+  iconFrame1.classList.add("showFromLeft");
+  iconFrame2.classList.add("showFromRight");
+  startMenu.classList.add("moveUnderScreen");
+  ground.classList.add("showFromBottom");
+  eventText.style.display = "block";
+
+  introMusic.stop();
+  fightMusic.play();
+
+  setInterval(gameLoop, 1000 / 60);
+}
+
+function gameLoop() {
+  c.clearRect(0, 0, canvas.width, canvas.height);
+
+  updateUI();
+
+  // big kolla sockets
+  player1.update();
+  player2.update();
+
+  // oh god kolla sockets
+  try {
+    player1.projectile.update();
+  } catch (error) {}
+  try {
+    player2.projectile.update();
+  } catch (error) {}
+
+  // focking boulshit kolla sockets
+  player1.individualUpdate();
+  player2.individualUpdate();
+
+  if (gameOver == false) {
+    checkPlayerCrossed();
+    checkCollisionIfAttacking();
+
+    if (player1.canMove == true) {
+      player1.movement();
+      player1.attacks();
+    }
+    if (player2.canMove == true) {
+      player2.movement();
+      player2.attacks();
+    }
+  }
+
+  checkGameOver();
 }
 
 function assignPlayers() {
   if (player1moeInput.checked == true) {
-    player1 = new PlayerMage(
-      200,
-      100,
-      "d",
-      "a",
-      "w",
-      "s",
-      " ",
-      "e",
-      false,
-      "images/stabby pete/stabby-pete-idle.png"
-    );
+    if (isHost) {
+      player1 = new PlayerMage(
+        200,
+        100,
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
+        false,
+        "images/stabby pete/stabby-pete-idle.png"
+      );
+    } else {
+      player1 = new PlayerMage(
+        window.innerWidth - 290,
+        100,
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
+        false,
+        "images/stabby pete/stabby-pete-idle.png"
+      );
+    }
+
+    socket.emit("assignCharacters", {
+      character: "moe",
+      roomId: roomId,
+    });
   } else if (player1peteInput.checked == true) {
-    player1 = new PlayerPete(
-      200,
-      100,
-      "d",
-      "a",
-      "w",
-      "s",
-      " ",
-      "e",
-      false,
-      "images/stabby pete/stabby-pete-idle-flip.png"
-    );
+    if (isHost) {
+      player1 = new PlayerPete(
+        200,
+        100,
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
+        false,
+        "images/stabby pete/stabby-pete-idle-flip.png"
+      );
+    } else {
+      player1 = new PlayerPete(
+        window.innerWidth - 290,
+        100,
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
+        false,
+        "images/stabby pete/stabby-pete-idle-flip.png"
+      );
+    }
+
+    socket.emit("assignCharacters", {
+      character: "pete",
+      roomId: roomId,
+    });
   }
 }
+
+socket.on("assignCharacters2", (data) => {
+  if (data.character == "moe") {
+    console.log("opponent picked moe");
+    if (!isHost) {
+      player2 = new PlayerMage(
+        200,
+        100,
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
+        false,
+        "images/stabby pete/stabby-pete-idle.png"
+      );
+    } else {
+      player2 = new PlayerMage(
+        window.innerWidth - 290,
+        100,
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
+        false,
+        "images/stabby pete/stabby-pete-idle.png"
+      );
+    }
+  } else if (data.character == "pete") {
+    console.log("opponent picked pete");
+    if (!isHost) {
+      player2 = new PlayerPete(
+        200,
+        100,
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
+        false,
+        "images/stabby pete/stabby-pete-idle-flip.png"
+      );
+    } else {
+      player2 = new PlayerPete(
+        window.innerWidth - 290,
+        100,
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
+        false,
+        "images/stabby pete/stabby-pete-idle-flip.png"
+      );
+    }
+  }
+
+  startGame();
+});
 
 function gameEvents() {
   while (true) {
@@ -1094,41 +1244,6 @@ function eventHook() {
     knockbackAmplifier = 1;
     changeEventText("");
   }, eventTimerdelay * eventDurationCoefficient);
-}
-
-function gameLoop() {
-  c.clearRect(0, 0, canvas.width, canvas.height);
-
-  updateUI();
-
-  player1.update();
-  player2.update();
-
-  try {
-    player1.projectile.update();
-  } catch (error) {}
-  try {
-    player2.projectile.update();
-  } catch (error) {}
-
-  player1.individualUpdate();
-  player2.individualUpdate();
-
-  if (gameOver == false) {
-    checkPlayerCrossed();
-    checkCollisionIfAttacking();
-
-    if (player1.canMove == true) {
-      player1.movement();
-      player1.attacks();
-    }
-    if (player2.canMove == true) {
-      player2.movement();
-      player2.attacks();
-    }
-  }
-
-  checkGameOver();
 }
 
 function checkCollisionIfAttacking() {
@@ -1286,7 +1401,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 function checkKeyDown(event, player) {
-  if (gameOver == false) {
+  if (gameOver == false && startMenu.style.display == "none") {
     switch (event.key) {
       case player.keys.right.key:
         player.keys.right.isPressed = true;
@@ -1318,7 +1433,7 @@ document.addEventListener("keyup", function (event) {
 });
 
 function checkKeyUp(event, player) {
-  if (gameOver == false) {
+  if (gameOver == false && startMenu.style.display == "none") {
     switch (event.key) {
       case player.keys.right.key:
         player.keys.right.isPressed = false;

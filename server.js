@@ -12,11 +12,7 @@ var rooms = {};
 
 app.get("/", (req, res) => {
   console.log(playersConnected);
-  if (playersConnected <= 1) {
-    res.sendFile(__dirname + "/index.html");
-  } else {
-    res.sendFile(__dirname + "/abyss.html");
-  }
+  res.sendFile(__dirname + "/index.html");
 });
 
 io.on("connection", (socket) => {
@@ -37,11 +33,18 @@ io.on("connection", (socket) => {
   });
 
   socket.on("joinGame", (data) => {
-    if (rooms[data.roomid] != null) {
-      socket.join(roomId);
+    if (rooms[data.roomId] != null) {
+      socket.join(data.roomId);
       socket.to(data.roomId).emit("playersConnected", {});
       socket.emit("playersConnected");
     }
+  });
+
+  socket.on("assignCharacters", (data) => {
+    console.log("Emitting to other player: " + data.socket);
+    socket
+      .to(data.roomId)
+      .emit("assignCharacters2", { character: data.character });
   });
 });
 
