@@ -17,7 +17,13 @@
 
     <div id="start-menu-container">
       <div id="logo"><img src="images/logo.png" alt="" /></div>
-      <button onclick="getReady()">Ready</button>
+      <button id="createButton" onclick="createGame()">Create Game</button>
+      <input id="input2" type="text" name="" />
+      <button id="button2" onclick="joinGame()">Join Game</button>
+      <div id="postCreate">
+        <p>Waiting for Opponent...</p>
+        <p id="codeText">Room Code:</p>
+      </div>
       <div class="character-select">
         <div>
           <h2>Stabby Pete</h2>

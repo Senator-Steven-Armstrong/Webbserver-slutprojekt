@@ -1,6 +1,7 @@
 // DECLARATION ---------------------------------------------------------------------------
 
 const socket = io();
+let roomId = null;
 
 const canvas = document.getElementById("game-area");
 const c = canvas.getContext("2d");
@@ -25,6 +26,11 @@ const player2peteInput = document.getElementById("pete2");
 const ground = document.getElementById("ground-img");
 
 const startMenu = document.getElementById("start-menu-container");
+const createGameButton = document.getElementById("createButton");
+const joinGameButton = document.getElementById("button2");
+const joinTextField = document.getElementById("input2");
+const waitingDiv = document.getElementById("postCreate");
+const codeText = document.getElementById("codeText");
 
 const eventText = document.getElementById("event-text");
 
@@ -920,9 +926,26 @@ class PlayerMage extends Player {
   }
 }
 
-function getReady() {
-  socket.emit("getReady");
+// ----------------------------------SOCKET SHIT----------------------------------
+
+function createGame() {
+  socket.emit("createGame");
 }
+
+function joinGame() {
+  roomId = document.getElementById("input2").value;
+  socket.emit("joinGame", { roomId: roomId });
+}
+
+socket.on("newGame", (data) => {
+  console.log("itsa me a-newGame");
+  roomId = data.roomId;
+  createGameButton.style.display = "none";
+  joinGameButton.style.display = "none";
+  joinTextField.style.display = "none";
+  waitingDiv.style.display = "block";
+  codeText.value = "Room Code: " + roomId;
+});
 
 function startGame() {
   if (

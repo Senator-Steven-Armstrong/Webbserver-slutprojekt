@@ -218,7 +218,7 @@ button {
   left: 0;
   right: 0;
   text-align: center;
-  top: 75vh;
+  top: 73vh;
 
   font-family: "Press Start 2P";
 
@@ -229,6 +229,48 @@ button {
   z-index: 1001;
   border: solid black 0px;
   background-color: lightgray;
+}
+
+#input2 {
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+  text-align: center;
+  top: 88vh;
+  width: 8vw;
+  height: 4vh;
+}
+
+#postCreate {
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+  text-align: center;
+
+  font-size: 0.5em;
+
+  width: 50vw;
+  top: 75vh;
+  display: none;
+}
+
+button:hover {
+  background-color: gray;
+}
+
+button:active {
+  background-color: rebeccapurple;
+}
+
+#button2 {
+  width: 18vw;
+  height: 8vh;
+
+  top: 85vh;
 }
 
 .character-select {
