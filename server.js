@@ -48,7 +48,20 @@ io.on("connection", (socket) => {
   });
 
   socket.on("updateMovement", (data) => {
-    socket.to(data.roomId).emit("updateMovement", { x: data.x, y: data.y });
+    socket.to(data.roomId).emit("updateMovement", {
+      x: data.x,
+      y: data.y,
+      speedX: data.speedX,
+      speedY: data.speedY,
+    });
+  });
+
+  socket.on("checkKeyDown", (data) => {
+    socket.to(data.roomId).emit("checkKeyDown", { key: data.key });
+  });
+
+  socket.on("checkKeyUp", (data) => {
+    socket.to(data.roomId).emit("checkKeyUp", { key: data.key });
   });
 });
 

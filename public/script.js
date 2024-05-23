@@ -948,7 +948,6 @@ socket.on("newGame", (data) => {
 });
 
 socket.on("playersConnected", () => {
-  console.log("trying to assign players");
   assignPlayers();
 });
 
@@ -994,6 +993,8 @@ function gameLoop() {
   socket.volatile.emit("updateMovement", {
     x: player1.x,
     y: player1.y,
+    speedX: player1.speedX,
+    speedY: player2.speedY,
     roomId: roomId,
   });
 
@@ -1001,6 +1002,7 @@ function gameLoop() {
   player1.update();
   player2.update();
 
+  player1.updateKnockback();
   player2.updateKnockback();
 
   // borde vara lugnt- uppdaterar bara animering
@@ -1040,6 +1042,8 @@ function gameLoop() {
 socket.on("updateMovement", (data) => {
   player2.x = data.x;
   player2.y = data.y;
+  player2.speedX = data.speedX;
+  player2.speedY = data.speedY;
 });
 
 function assignPlayers() {
@@ -1119,12 +1123,12 @@ socket.on("assignCharacters", (data) => {
       player2 = new PlayerMage(
         window.innerWidth - 290,
         100,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
         true,
         "images/stabby pete/stabby-pete-idle-flip.png"
       );
@@ -1132,12 +1136,12 @@ socket.on("assignCharacters", (data) => {
       player2 = new PlayerMage(
         200,
         100,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
         false,
         "images/stabby pete/stabby-pete-idle.png"
       );
@@ -1148,12 +1152,12 @@ socket.on("assignCharacters", (data) => {
       player2 = new PlayerPete(
         window.innerWidth - 290,
         100,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
         true,
         "images/stabby pete/stabby-pete-idle-flip.png"
       );
@@ -1161,12 +1165,12 @@ socket.on("assignCharacters", (data) => {
       player2 = new PlayerPete(
         200,
         100,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
+        "d",
+        "a",
+        "w",
+        "s",
+        " ",
+        "e",
         false,
         "images/stabby pete/stabby-pete-idle.png"
       );
@@ -1203,51 +1207,47 @@ function detectAttackCollision(playerAttacking, enemyHit) {
 }
 
 function hitEnemy(playerAttacking, enemyHit) {
-  if (!invincibility) {
-    enemyHit.isHit = true;
-    enemyHit.canMove = false;
-    if (enemyHit.isBlocking == true) {
-      //Checks if Tranquility mode so as not to overheal opponent
-      if (
-        damageAmplifier < 0 &&
-        enemyHit.health - playerAttacking.damage * damageAmplifier * 0.2 >= 1000
-      ) {
-        enemyHit.health = 1000;
-      } else {
-        enemyHit.health -= playerAttacking.damage * 0.2 * damageAmplifier;
-      }
+  enemyHit.isHit = true;
+  enemyHit.canMove = false;
+  if (enemyHit.isBlocking == true) {
+    //Checks if Tranquility mode so as not to overheal opponent
+    if (
+      damageAmplifier < 0 &&
+      enemyHit.health - playerAttacking.damage * damageAmplifier * 0.2 >= 1000
+    ) {
+      enemyHit.health = 1000;
     } else {
-      //Checks if Tranquility mode so as not to overheal opponent
-      if (
-        damageAmplifier < 0 &&
-        enemyHit.health - playerAttacking.damage * damageAmplifier >= 1000
-      ) {
-        enemyHit.health = 1000;
-      } else {
-        enemyHit.health -= playerAttacking.damage * damageAmplifier;
-      }
+      enemyHit.health -= playerAttacking.damage * 0.2 * damageAmplifier;
     }
-    if (playerAttacking.isFlipped == false) {
-      //Apply stronger knockback to counteract the enemy's current speedX
-      if (enemyHit.speedX == 0) {
-        enemyHit.applyKnockback(playerAttacking.attackForceX);
-      } else {
-        enemyHit.applyKnockback(playerAttacking.attackForceX - enemyHit.speedX);
-      }
+  } else {
+    //Checks if Tranquility mode so as not to overheal opponent
+    if (
+      damageAmplifier < 0 &&
+      enemyHit.health - playerAttacking.damage * damageAmplifier >= 1000
+    ) {
+      enemyHit.health = 1000;
     } else {
-      if (enemyHit.speedX == 0) {
-        enemyHit.applyKnockback(-playerAttacking.attackForceX);
-      } else {
-        enemyHit.applyKnockback(
-          -playerAttacking.attackForceX - enemyHit.speedX
-        );
-      }
+      enemyHit.health -= playerAttacking.damage * damageAmplifier;
     }
-    enemyHit.speedY += playerAttacking.attackForceY;
-
-    moveHealthBar(enemyHit);
-    enemyHit.changeAnimation(enemyHit.sprites.hit, enemyHit.sprites.hitFlip);
   }
+  if (playerAttacking.isFlipped == false) {
+    //Apply stronger knockback to counteract the enemy's current speedX
+    if (enemyHit.speedX == 0) {
+      enemyHit.applyKnockback(playerAttacking.attackForceX);
+    } else {
+      enemyHit.applyKnockback(playerAttacking.attackForceX - enemyHit.speedX);
+    }
+  } else {
+    if (enemyHit.speedX == 0) {
+      enemyHit.applyKnockback(-playerAttacking.attackForceX);
+    } else {
+      enemyHit.applyKnockback(-playerAttacking.attackForceX - enemyHit.speedX);
+    }
+  }
+  enemyHit.speedY += playerAttacking.attackForceY;
+
+  moveHealthBar(enemyHit);
+  enemyHit.changeAnimation(enemyHit.sprites.hit, enemyHit.sprites.hitFlip);
 }
 
 function checkPlayerCrossed() {
@@ -1307,7 +1307,7 @@ function checkGameOver() {
 }
 
 document.addEventListener("keydown", function (event) {
-  checkKeyDown(event, player1);
+  checkKeyDown(event.key, player1);
 
   // FIXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa så det händer online
   if (canReset == true) {
@@ -1319,9 +1319,9 @@ document.addEventListener("keydown", function (event) {
   }
 });
 
-function checkKeyDown(event, player) {
+function checkKeyDown(key, player) {
   if (gameOver == false && startMenu.style.display == "none") {
-    switch (event.key) {
+    switch (key) {
       case player.keys.right.key:
         player.keys.right.isPressed = true;
         player.lastKey = player.keys.right.key;
@@ -1332,19 +1332,47 @@ function checkKeyDown(event, player) {
         break;
       case player.keys.up.key:
         player.keys.up.isPressed = true;
+        if (player == player1) {
+          socket.volatile.emit("checkKeyDown", {
+            key: player.keys.up.key,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.attack.key:
         player.keys.attack.isPressed = true;
+        if (player == player1) {
+          socket.volatile.emit("checkKeyDown", {
+            key: player.keys.attack.key,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.down.key:
         player.keys.down.isPressed = true;
+        if (player == player1) {
+          socket.volatile.emit("checkKeyDown", {
+            key: player.keys.down.key,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.block.key:
         player.keys.block.isPressed = true;
+        if (player == player1) {
+          socket.volatile.emit("checkKeyDown", {
+            key: player.keys.block.key,
+            roomId: roomId,
+          });
+        }
         break;
     }
   }
 }
+
+socket.on("checkKeyDown", (data) => {
+  checkKeyDown(data.key, player2);
+});
 
 document.addEventListener("keyup", function (event) {
   checkKeyUp(event, player1);
@@ -1361,21 +1389,49 @@ function checkKeyUp(event, player) {
         break;
       case player.keys.up.key:
         player.keys.up.isPressed = false;
+        if (player == player1) {
+          socket.volatile.emit("checkKeyUp", {
+            key: player.keys.up,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.attack.key:
         player.keys.attack.isPressed = false;
+        if (player == player1) {
+          socket.volatile.emit("checkKeyUp", {
+            key: player.keys.attack,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.down.key:
         player.keys.down.isPressed = false;
+        if (player == player1) {
+          socket.volatile.emit("checkKeyUp", {
+            key: player.keys.down,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.block.key:
         player.keys.block.isPressed = false;
+        if (player == player1) {
+          socket.volatile.emit("checkKeyUp", {
+            key: player.keys.block,
+            roomId: roomId,
+          });
+        }
         player.isBlocking = false;
         player.canMove = true;
         break;
     }
   }
 }
+
+socket.on("checkKeyUp", (data) => {
+  checkKeyUp(data.key, player2);
+});
 
 // UI / HTML ----------------------------------------------------------------------------
 
