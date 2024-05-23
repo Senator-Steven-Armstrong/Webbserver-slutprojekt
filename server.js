@@ -26,7 +26,7 @@ io.on("connection", (socket) => {
 
   socket.on("createGame", () => {
     console.log("Creating new game");
-    const roomId = makeid(5);
+    const roomId = makeId(2);
     rooms[roomId] = {};
     socket.join(roomId);
     socket.emit("newGame", { roomId: roomId });
@@ -44,11 +44,15 @@ io.on("connection", (socket) => {
     console.log("Emitting to other player: " + data.socket);
     socket
       .to(data.roomId)
-      .emit("assignCharacters2", { character: data.character });
+      .emit("assignCharacters", { character: data.character });
+  });
+
+  socket.on("updateMovement", (data) => {
+    socket.to(data.roomId).emit("updateMovement", { x: data.x, y: data.y });
   });
 });
 
-function makeid(length) {
+function makeId(length) {
   let result = "";
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

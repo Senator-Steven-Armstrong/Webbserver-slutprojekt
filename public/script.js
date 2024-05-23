@@ -33,8 +33,6 @@ const joinTextField = document.getElementById("input2");
 const waitingDiv = document.getElementById("postCreate");
 const codeText = document.getElementById("codeText");
 
-const eventText = document.getElementById("event-text");
-
 // GAMEPLAY / CANVAS --------------------------------------------------------------------
 
 const floorLevel = 80;
@@ -49,9 +47,6 @@ let knockbackAmplifier = 1.5;
 let movementSpeedAmplifier = 1;
 let damageAmplifier = 1;
 let invincibility = false;
-let eventTimerdelay = 10000;
-let eventDurationCoefficient = 0.4;
-let lastEvent = 0;
 
 let canReset = false;
 
@@ -412,7 +407,9 @@ class Player extends Sprite {
     } else if (this.x + this.width >= canvas.width) {
       this.speedX = 0;
     }
+  }
 
+  updateKnockback() {
     //Check for knockback
     if (
       (this.knockbackSpeed == this.speedX && this.speedX != 0) ||
@@ -976,14 +973,11 @@ function startGame() {
     gameTime--;
   }, 1000);
 
-  IDeventTimer = setInterval(gameEvents, eventTimerdelay);
-
   UIContainer.classList.add("showFromTop");
   iconFrame1.classList.add("showFromLeft");
   iconFrame2.classList.add("showFromRight");
   startMenu.classList.add("moveUnderScreen");
   ground.classList.add("showFromBottom");
-  eventText.style.display = "block";
 
   introMusic.stop();
   fightMusic.play();
@@ -996,11 +990,20 @@ function gameLoop() {
 
   updateUI();
 
-  // big kolla sockets
+  //UPPDATERAR POSITIONEN AV SPELARNA FÖR SOCKET.IO
+  socket.volatile.emit("updateMovement", {
+    x: player1.x,
+    y: player1.y,
+    roomId: roomId,
+  });
+
+  // borde vara lungt- lägger till gravitation, knockback, ritar/animerar
   player1.update();
   player2.update();
 
-  // oh god kolla sockets
+  player2.updateKnockback();
+
+  // borde vara lugnt- uppdaterar bara animering
   try {
     player1.projectile.update();
   } catch (error) {}
@@ -1008,14 +1011,18 @@ function gameLoop() {
     player2.projectile.update();
   } catch (error) {}
 
-  // focking boulshit kolla sockets
+  // borde vara lungt- kollar bara float för moe
   player1.individualUpdate();
   player2.individualUpdate();
 
   if (gameOver == false) {
+    //borde vara lungt ser inte varför detta borde vara problem
     checkPlayerCrossed();
+
+    //eh idk borde vara lungt
     checkCollisionIfAttacking();
 
+    // det här är det som behöver uppdateras med sockets, nvm behöver bara skicka över position så borde det funka
     if (player1.canMove == true) {
       player1.movement();
       player1.attacks();
@@ -1026,8 +1033,14 @@ function gameLoop() {
     }
   }
 
+  // och det här + timern
   checkGameOver();
 }
+
+socket.on("updateMovement", (data) => {
+  player2.x = data.x;
+  player2.y = data.y;
+});
 
 function assignPlayers() {
   if (player1moeInput.checked == true) {
@@ -1054,8 +1067,8 @@ function assignPlayers() {
         "s",
         " ",
         "e",
-        false,
-        "images/stabby pete/stabby-pete-idle.png"
+        true,
+        "images/stabby pete/stabby-pete-idle-flip.png"
       );
     }
 
@@ -1075,7 +1088,7 @@ function assignPlayers() {
         " ",
         "e",
         false,
-        "images/stabby pete/stabby-pete-idle-flip.png"
+        "images/stabby pete/stabby-pete-idle.png"
       );
     } else {
       player1 = new PlayerPete(
@@ -1087,7 +1100,7 @@ function assignPlayers() {
         "s",
         " ",
         "e",
-        false,
+        true,
         "images/stabby pete/stabby-pete-idle-flip.png"
       );
     }
@@ -1099,152 +1112,69 @@ function assignPlayers() {
   }
 }
 
-socket.on("assignCharacters2", (data) => {
+socket.on("assignCharacters", (data) => {
   if (data.character == "moe") {
     console.log("opponent picked moe");
-    if (!isHost) {
-      player2 = new PlayerMage(
-        200,
-        100,
-        "d",
-        "a",
-        "w",
-        "s",
-        " ",
-        "e",
-        false,
-        "images/stabby pete/stabby-pete-idle.png"
-      );
-    } else {
+    if (isHost) {
       player2 = new PlayerMage(
         window.innerWidth - 290,
         100,
-        "d",
-        "a",
-        "w",
-        "s",
-        " ",
-        "e",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        true,
+        "images/stabby pete/stabby-pete-idle-flip.png"
+      );
+    } else {
+      player2 = new PlayerMage(
+        200,
+        100,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
         false,
         "images/stabby pete/stabby-pete-idle.png"
       );
     }
   } else if (data.character == "pete") {
     console.log("opponent picked pete");
-    if (!isHost) {
+    if (isHost) {
       player2 = new PlayerPete(
-        200,
+        window.innerWidth - 290,
         100,
-        "d",
-        "a",
-        "w",
-        "s",
-        " ",
-        "e",
-        false,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        true,
         "images/stabby pete/stabby-pete-idle-flip.png"
       );
     } else {
       player2 = new PlayerPete(
-        window.innerWidth - 290,
+        200,
         100,
-        "d",
-        "a",
-        "w",
-        "s",
-        " ",
-        "e",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
         false,
-        "images/stabby pete/stabby-pete-idle-flip.png"
+        "images/stabby pete/stabby-pete-idle.png"
       );
     }
   }
 
   startGame();
 });
-
-function gameEvents() {
-  while (true) {
-    chosenEvent = Math.ceil(Math.random() * 6);
-    if (chosenEvent != lastEvent) break;
-  }
-  lastEvent = chosenEvent;
-
-  switch (chosenEvent) {
-    case 1:
-      eventKnockback();
-      break;
-    case 2:
-      eventMovementSpeed();
-      break;
-    case 3:
-      eventDamage();
-      break;
-    case 4:
-      eventHeal();
-      break;
-    case 5:
-      eventInvincible();
-      break;
-    case 6:
-      eventHook();
-      break;
-  }
-}
-
-function eventKnockback() {
-  changeEventText("Increased Knockback!");
-  knockbackAmplifier = 2.5;
-  setTimeout(function () {
-    knockbackAmplifier = 1;
-    changeEventText("");
-  }, eventTimerdelay * eventDurationCoefficient);
-}
-
-function eventDamage() {
-  changeEventText("Berserker mode!");
-  damageAmplifier = 2;
-  setTimeout(function () {
-    damageAmplifier = 1;
-    changeEventText("");
-  }, eventTimerdelay * eventDurationCoefficient);
-}
-
-function eventMovementSpeed() {
-  changeEventText("Super Speed!");
-  movementSpeedAmplifier = 2.2;
-  setTimeout(function () {
-    movementSpeedAmplifier = 1;
-    changeEventText("");
-  }, eventTimerdelay * eventDurationCoefficient);
-}
-
-function eventHeal() {
-  changeEventText("A moment of Tranquility.");
-  damageAmplifier = -1;
-  setTimeout(function () {
-    damageAmplifier = 1;
-    changeEventText("");
-  }, eventTimerdelay * eventDurationCoefficient);
-}
-
-function eventInvincible() {
-  changeEventText("Holy protection!");
-  invincibility = true;
-  setTimeout(function () {
-    invincibility = false;
-    changeEventText("");
-  }, eventTimerdelay * eventDurationCoefficient);
-}
-
-function eventHook() {
-  changeEventText("Hook hands!");
-  knockbackAmplifier = -1.5;
-  setTimeout(function () {
-    knockbackAmplifier = 1;
-    changeEventText("");
-  }, eventTimerdelay * eventDurationCoefficient);
-}
 
 function checkCollisionIfAttacking() {
   if (player1.isAttacking == true) {
@@ -1344,10 +1274,6 @@ function checkGameOver() {
       player1.isAttacking = false;
       player2.isAttacking = false;
 
-      clearInterval(IDgameTimer);
-      clearInterval(IDeventTimer);
-      eventText.style.display = "none";
-
       player1.canMove = false;
       player2.canMove = false;
 
@@ -1381,16 +1307,9 @@ function checkGameOver() {
 }
 
 document.addEventListener("keydown", function (event) {
-  try {
-    checkKeyDown(event, player1);
-  } catch (error) {
-    console.log("Feature not a bug");
-  }
-  try {
-    checkKeyDown(event, player2);
-  } catch (error) {
-    console.log("Feature not a bug");
-  }
+  checkKeyDown(event, player1);
+
+  // FIXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa så det händer online
   if (canReset == true) {
     switch (event.key) {
       case " ":
@@ -1429,7 +1348,6 @@ function checkKeyDown(event, player) {
 
 document.addEventListener("keyup", function (event) {
   checkKeyUp(event, player1);
-  checkKeyUp(event, player2);
 });
 
 function checkKeyUp(event, player) {
@@ -1485,8 +1403,4 @@ function returnProcentage(num) {
   procentage = num * 100;
   string = procentage.toString() + "%";
   return string;
-}
-
-function changeEventText(text) {
-  eventText.innerHTML = text;
 }
