@@ -922,13 +922,17 @@ class PlayerMage extends Player {
 // ----------------------------------SOCKET STUFFS----------------------------------
 
 function createGame() {
-  isHost = true;
-  socket.emit("createGame");
+  if (player1moeInput.checked == true || player1peteInput.checked == true) {
+    isHost = true;
+    socket.emit("createGame");
+  }
 }
 
 function joinGame() {
-  roomId = document.getElementById("input2").value;
-  socket.emit("joinGame", { roomId: roomId });
+  if (player1moeInput.checked == true || player1peteInput.checked == true) {
+    roomId = document.getElementById("input2").value;
+    socket.emit("joinGame", { roomId: roomId });
+  }
 }
 
 socket.on("newGame", (data) => {
