@@ -7,26 +7,22 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-var playersConnected = 0;
 var rooms = {};
 
 app.get("/", (req, res) => {
-  console.log(playersConnected);
   res.sendFile(__dirname + "/index.html");
 });
 
 io.on("connection", (socket) => {
   console.log("user " + socket.id + " connected");
-  playersConnected++;
 
   socket.on("disconnect", () => {
     console.log("user " + socket.id + " disconnected");
-    playersConnected--;
   });
 
   socket.on("createGame", () => {
     console.log("Creating new game");
-    const roomId = makeId(2);
+    const roomId = makeId(5);
     rooms[roomId] = {};
     socket.join(roomId);
     socket.emit("newGame", { roomId: roomId });
@@ -41,7 +37,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("assignCharacters", (data) => {
-    console.log("Emitting to other player: " + data.socket);
     socket
       .to(data.roomId)
       .emit("assignCharacters", { character: data.character });
@@ -62,6 +57,11 @@ io.on("connection", (socket) => {
 
   socket.on("checkKeyUp", (data) => {
     socket.to(data.roomId).emit("checkKeyUp", { key: data.key });
+  });
+
+  socket.on("updateTimer", (data) => {
+    console.log("updating uuh timer uuh");
+    socket.to(data.roomId).emit("updateTimer", { timerTime: data.timerTime });
   });
 });
 

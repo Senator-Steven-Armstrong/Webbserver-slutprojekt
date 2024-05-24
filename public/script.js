@@ -263,11 +263,7 @@ class Player extends Sprite {
   }
   movement() {
     // Left and right
-    if (
-      this.keys.left.isPressed == true &&
-      this.lastKey == this.keys.left.key &&
-      this.x > 0
-    ) {
+    if (this.keys.left.isPressed == true && this.x > 0) {
       this.speedX = -this.movementSpeed * movementSpeedAmplifier;
       if (this.speedY == 0) {
         if (this.isFlipped == false)
@@ -280,7 +276,6 @@ class Player extends Sprite {
       }
     } else if (
       this.keys.right.isPressed == true &&
-      this.lastKey == this.keys.right.key &&
       this.x + this.width < canvas.width
     ) {
       this.speedX = this.movementSpeed * movementSpeedAmplifier;
@@ -968,9 +963,12 @@ function startGame() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  IDgameTimer = setInterval(function () {
-    gameTime--;
-  }, 1000);
+  if (isHost) {
+    IDgameTimer = setInterval(function () {
+      if (gameOver == false) gameTime--;
+      socket.emit("updateTimer", { roomId: roomId, timerTime: gameTime });
+    }, 1000);
+  }
 
   UIContainer.classList.add("showFromTop");
   iconFrame1.classList.add("showFromLeft");
@@ -983,6 +981,11 @@ function startGame() {
 
   setInterval(gameLoop, 1000 / 60);
 }
+
+socket.on("updateTimer", (data) => {
+  console.log("yuh we updating the timer in this bih");
+  gameTime = data.timerTime;
+});
 
 function gameLoop() {
   c.clearRect(0, 0, canvas.width, canvas.height);
@@ -997,6 +1000,8 @@ function gameLoop() {
     speedY: player2.speedY,
     roomId: roomId,
   });
+
+  console.log(player2.speedY);
 
   // borde vara lungt- lägger till gravitation, knockback, ritar/animerar
   player1.update();
@@ -1285,12 +1290,12 @@ function checkGameOver() {
         player1.changeAnimation(player1.sprites.lose);
         player2.changeAnimation(player2.sprites.win);
         player1.health = 0;
-        gameOverText("Player 2 wins!");
+        gameOverText("You Lose!");
       } else if (player2.health <= 0) {
         player1.changeAnimation(player1.sprites.win);
         player2.changeAnimation(player2.sprites.lose);
         player2.health = 0;
-        gameOverText("Player 1 wins!");
+        gameOverText("You Win!");
       }
       player1.speedX = 0;
       player2.speedX = 0;
@@ -1309,7 +1314,6 @@ function checkGameOver() {
 document.addEventListener("keydown", function (event) {
   checkKeyDown(event.key, player1);
 
-  // FIXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa så det händer online
   if (canReset == true) {
     switch (event.key) {
       case " ":
@@ -1325,15 +1329,27 @@ function checkKeyDown(key, player) {
       case player.keys.right.key:
         player.keys.right.isPressed = true;
         player.lastKey = player.keys.right.key;
+        if (player == player1) {
+          socket.emit("checkKeyDown", {
+            key: player.keys.right.key,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.left.key:
         player.keys.left.isPressed = true;
         player.lastKey = player.keys.left.key;
+        if (player == player1) {
+          socket.emit("checkKeyDown", {
+            key: player.keys.left.key,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.up.key:
         player.keys.up.isPressed = true;
         if (player == player1) {
-          socket.volatile.emit("checkKeyDown", {
+          socket.emit("checkKeyDown", {
             key: player.keys.up.key,
             roomId: roomId,
           });
@@ -1342,7 +1358,7 @@ function checkKeyDown(key, player) {
       case player.keys.attack.key:
         player.keys.attack.isPressed = true;
         if (player == player1) {
-          socket.volatile.emit("checkKeyDown", {
+          socket.emit("checkKeyDown", {
             key: player.keys.attack.key,
             roomId: roomId,
           });
@@ -1351,7 +1367,7 @@ function checkKeyDown(key, player) {
       case player.keys.down.key:
         player.keys.down.isPressed = true;
         if (player == player1) {
-          socket.volatile.emit("checkKeyDown", {
+          socket.emit("checkKeyDown", {
             key: player.keys.down.key,
             roomId: roomId,
           });
@@ -1360,7 +1376,7 @@ function checkKeyDown(key, player) {
       case player.keys.block.key:
         player.keys.block.isPressed = true;
         if (player == player1) {
-          socket.volatile.emit("checkKeyDown", {
+          socket.emit("checkKeyDown", {
             key: player.keys.block.key,
             roomId: roomId,
           });
@@ -1383,14 +1399,26 @@ function checkKeyUp(event, player) {
     switch (event.key) {
       case player.keys.right.key:
         player.keys.right.isPressed = false;
+        if (player == player1) {
+          socket.emit("checkKeyUp", {
+            key: player.keys.right,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.left.key:
         player.keys.left.isPressed = false;
+        if (player == player1) {
+          socket.emit("checkKeyUp", {
+            key: player.keys.left,
+            roomId: roomId,
+          });
+        }
         break;
       case player.keys.up.key:
         player.keys.up.isPressed = false;
         if (player == player1) {
-          socket.volatile.emit("checkKeyUp", {
+          socket.emit("checkKeyUp", {
             key: player.keys.up,
             roomId: roomId,
           });
@@ -1399,7 +1427,7 @@ function checkKeyUp(event, player) {
       case player.keys.attack.key:
         player.keys.attack.isPressed = false;
         if (player == player1) {
-          socket.volatile.emit("checkKeyUp", {
+          socket.emit("checkKeyUp", {
             key: player.keys.attack,
             roomId: roomId,
           });
@@ -1408,7 +1436,7 @@ function checkKeyUp(event, player) {
       case player.keys.down.key:
         player.keys.down.isPressed = false;
         if (player == player1) {
-          socket.volatile.emit("checkKeyUp", {
+          socket.emit("checkKeyUp", {
             key: player.keys.down,
             roomId: roomId,
           });
@@ -1417,7 +1445,7 @@ function checkKeyUp(event, player) {
       case player.keys.block.key:
         player.keys.block.isPressed = false;
         if (player == player1) {
-          socket.volatile.emit("checkKeyUp", {
+          socket.emit("checkKeyUp", {
             key: player.keys.block,
             roomId: roomId,
           });
@@ -1446,12 +1474,26 @@ function gameOverText(text) {
 function moveHealthBar(enemyHit) {
   //Player max hp will by default be 1000
   procent = (1000 - enemyHit.health) / 1000;
-  moveAmountPlayer1 = returnProcentage(procent);
-  moveAmountPlayer2 = returnProcentage(-procent);
+  if (isHost) {
+    moveAmountPlayer1 = returnProcentage(procent);
+    moveAmountPlayer2 = returnProcentage(-procent);
+  } else {
+    moveAmountPlayer1 = returnProcentage(-procent);
+    moveAmountPlayer2 = returnProcentage(procent);
+  }
+
   if (enemyHit == player1) {
-    healthbarPlayer1.style.marginLeft = moveAmountPlayer1;
+    if (isHost) {
+      healthbarPlayer1.style.marginLeft = moveAmountPlayer1;
+    } else {
+      healthbarPlayer2.style.marginLeft = moveAmountPlayer1;
+    }
   } else if (enemyHit == player2) {
-    healthbarPlayer2.style.marginLeft = moveAmountPlayer2;
+    if (isHost) {
+      healthbarPlayer2.style.marginLeft = moveAmountPlayer2;
+    } else {
+      healthbarPlayer1.style.marginLeft = moveAmountPlayer2;
+    }
   }
 }
 
