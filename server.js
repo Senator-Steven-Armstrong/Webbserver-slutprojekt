@@ -60,7 +60,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("updateTimer", (data) => {
-    console.log("updating uuh timer uuh");
     socket.to(data.roomId).emit("updateTimer", { timerTime: data.timerTime });
   });
 });

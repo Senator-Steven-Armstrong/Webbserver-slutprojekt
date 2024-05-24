@@ -928,7 +928,6 @@ function createGame() {
 
 function joinGame() {
   roomId = document.getElementById("input2").value;
-  console.log(roomId);
   socket.emit("joinGame", { roomId: roomId });
 }
 
@@ -983,7 +982,6 @@ function startGame() {
 }
 
 socket.on("updateTimer", (data) => {
-  console.log("yuh we updating the timer in this bih");
   gameTime = data.timerTime;
 });
 
@@ -1000,8 +998,6 @@ function gameLoop() {
     speedY: player2.speedY,
     roomId: roomId,
   });
-
-  console.log(player2.speedY);
 
   // borde vara lungt- lägger till gravitation, knockback, ritar/animerar
   player1.update();
